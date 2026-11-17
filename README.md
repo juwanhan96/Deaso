@@ -14,7 +14,6 @@ React + Vite + Hono + Tailwind CSS, Cloudflare Pages 배포.
 ├─ server/app.ts           # Hono 앱 (/api/*)
 ├─ functions/api/[[route]].ts  # Cloudflare Pages Functions → Hono
 ├─ public/                 # favicon, robots.txt
-├─ mockup/index.html       # 디자인 시안 (배포 대상 아님)
 └─ wrangler.toml
 ```
 
