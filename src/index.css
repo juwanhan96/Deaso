@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+/* Pretendard Variable (jsDelivr CDN) */
+@font-face {
+  font-family: 'PretendardVariable';
+  src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/2611030106@font-variable-694/variable-694/PretendardVariable.woff2') format('woff2');
+  font-weight: 45 930;
+  font-display: swap;
+}
+
+/* 색 토큰: 라이트 기본값 → OS 다크 모드 → data-theme 수동 지정 순 */
+:root {
+  --bg: #F2F5F4;
+  --surface: #FFFFFF;
+  --ink: #15201D;
+  --muted: #5A6763;
+  --line: #D6DDDA;
+  --accent: #2346C4;      /* 과학도시 코발트 */
+  --accent-soft: #E3E9FB;
+  --clay: #B95A27;        /* 계족산 황톳길 */
+  --clay-soft: #F6E6DC;
+  --forest: #1F6B55;      /* 한밭수목원 · 대청호 */
+  --forest-soft: #DDEDE6;
+  --on-accent: #FFFFFF;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1514; --surface: #172020; --ink: #E5ECE9; --muted: #9AA8A3; --line: #2A3634;
+    --accent: #8EA6FF; --accent-soft: #1D2747; --clay: #E8925F; --clay-soft: #3A251A;
+    --forest: #6BC4A4; --forest-soft: #16302A; --on-accent: #0F1514;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1514; --surface: #172020; --ink: #E5ECE9; --muted: #9AA8A3; --line: #2A3634;
+  --accent: #8EA6FF; --accent-soft: #1D2747; --clay: #E8925F; --clay-soft: #3A251A;
+  --forest: #6BC4A4; --forest-soft: #16302A; --on-accent: #0F1514;
+  color-scheme: dark;
+}
+
+/* 토큰을 Tailwind 유틸리티로 노출: bg-surface, text-muted, border-line ... */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-clay: var(--clay);
+  --color-clay-soft: var(--clay-soft);
+  --color-forest: var(--forest);
+  --color-forest-soft: var(--forest-soft);
+  --color-on-accent: var(--on-accent);
+  --font-sans: "PretendardVariable", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    font-size: 16px;
+    line-height: 1.65;
+  }
+  h1, h2, h3 { text-wrap: balance; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+}
+
+@utility wrap {
+  max-width: 1160px;
+  margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+@utility display {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+@utility eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; }
+}
