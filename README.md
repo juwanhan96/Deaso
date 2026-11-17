@@ -12,7 +12,8 @@ React + Vite + Hono + Tailwind CSS, Cloudflare Pages 배포.
 │  ├─ hooks/useApi.ts      # 번들 데이터로 먼저 렌더 → /api 응답으로 교체
 │  └─ index.css            # Tailwind v4 + 색 토큰(라이트/다크) + Pretendard
 ├─ server/app.ts           # Hono 앱 (/api/*)
-├─ server/auth.ts          # Google 로그인 (쿠키 세션, DB 없음)
+├─ server/auth.ts          # Google 로그인 (ID 토큰 검증, 쿠키 세션, DB 없음)
+├─ src/config.ts           # Google 클라이언트 ID 등 공개 설정
 ├─ functions/api/[[route]].ts  # Cloudflare Pages Functions → Hono
 ├─ public/                 # favicon, robots.txt
 └─ wrangler.toml
@@ -36,7 +37,7 @@ React + Vite + Hono + Tailwind CSS, Cloudflare Pages 배포.
 | `GET /api/festivals?month=5` | 축제 (month 생략 시 전체) |
 | `GET /api/districts`, `/api/districts/:id` | 5개 구 |
 | `GET /api/routes` | KTX 소요 시간 |
-| `GET /api/auth/google` | Google 로그인 시작 및 콜백 |
+| `POST /api/auth/google` | Google ID 토큰(`{ credential }`) 검증 후 로그인 |
 | `POST /api/auth/logout` | 로그아웃 |
 | `GET /api/me` | 현재 로그인 사용자 (`{ user: null }` 이면 비로그인) |
 
@@ -54,17 +55,16 @@ React + Vite + Hono + Tailwind CSS, Cloudflare Pages 배포.
 
 ## Google 로그인 설정
 
-로그인 상태는 서명된 JWT 쿠키(`deaso_session`, 7일)에만 저장하며 사용자 정보를 DB에 저장하지 않습니다.
+Google Identity Services("Google로 로그인" 버튼) 방식입니다. 클라이언트 비밀번호, 리디렉션 URI, 서버 비밀키, DB가 필요 없습니다.
 
-1. Google Cloud Console → API 및 서비스 → 사용자 인증 정보 → OAuth 클라이언트 ID(웹 애플리케이션)
-2. **승인된 리디렉션 URI**에 추가
-   - `https://deaso.pages.dev/api/auth/google`
-   - `http://localhost:5173/api/auth/google` (로컬 개발용)
-3. 환경 변수
-   - `GOOGLE_CLIENT_ID`: `wrangler.toml`의 `[vars]`에 있음
-   - `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`: 비밀 값
-     - 로컬: `.dev.vars.example`을 `.dev.vars`로 복사해 채우기
-     - 배포: Cloudflare 대시보드 → Pages 프로젝트 → Settings → Variables and Secrets → **Secret**으로 추가 후 재배포
+- 버튼이 Google ID 토큰을 받아 `POST /api/auth/google`로 보내면, 서버가 Google 공개키로 서명과 클라이언트 ID를 검증한 뒤 토큰을 httpOnly 쿠키(`deaso_session`)에 저장합니다.
+- ID 토큰 유효기간(약 1시간)이 지나면 다시 로그인해야 합니다. (연습용 단순화)
+- 클라이언트 ID는 `src/config.ts`에 있습니다.
+
+Google Cloud Console → 사용자 인증 정보 → OAuth 클라이언트 ID → **승인된 JavaScript 원본**에 다음을 추가해야 합니다.
+
+- `https://deaso.pages.dev`
+- `http://localhost`, `http://localhost:5173` (로컬 개발용)
 
 ## 남은 작업
 

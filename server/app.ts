@@ -2,12 +2,11 @@ import { Hono } from 'hono'
 import { cache } from 'hono/cache'
 import { districts, festivals, ktxRoutes, places } from '../src/data/daejeon'
 import auth, { getSessionUser } from './auth'
-import type { Env } from './env'
 
 // /api/* 를 담당하는 Hono 앱.
 // 개발: @hono/vite-dev-server 가 이 파일을 직접 실행
 // 배포: functions/api/[[route]].ts 가 Cloudflare Pages Functions로 감싸서 실행
-const app = new Hono<Env>().basePath('/api')
+const app = new Hono().basePath('/api')
 
 // 공개 데이터 API만 캐시합니다. (로그인 관련 응답은 사람마다 달라서 캐시하면 안 됨)
 const isWorkers = typeof caches !== 'undefined' && 'default' in caches
@@ -57,8 +56,6 @@ app.notFound((c) => c.json({ error: '없는 API 경로입니다.' }, 404))
 
 app.onError((err, c) => {
   console.error(err)
-  // Google 로그인 도중 실패(토큰 교환 실패, state 불일치 등)는 첫 화면으로 돌려보냅니다.
-  if (c.req.path.startsWith('/api/auth/')) return c.redirect('/?login=failed')
   return c.json({ error: '서버 오류가 발생했습니다.' }, 500)
 })
 

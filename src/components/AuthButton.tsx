@@ -1,31 +1,81 @@
-import { LOGIN_URL, useAuth } from '../hooks/useAuth'
+import { useEffect, useRef, useState } from 'react'
+import { GOOGLE_CLIENT_ID } from '../config'
+import { useAuth } from '../hooks/useAuth'
 
-function GoogleMark() {
-  return (
-    <svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true">
-      <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z" />
-      <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z" />
-      <path fill="#FBBC05" d="M3.97 10.72A5.41 5.41 0 0 1 3.68 9c0-.6.1-1.18.29-1.72V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.05l3.01-2.33z" />
-      <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z" />
-    </svg>
-  )
+const GSI_SRC = 'https://accounts.google.com/gsi/client'
+
+// Google Identity Services 스크립트를 한 번만 불러옵니다.
+let gsiPromise: Promise<void> | null = null
+function loadGsi() {
+  if (window.google?.accounts?.id) return Promise.resolve()
+  gsiPromise ??= new Promise<void>((resolve, reject) => {
+    const s = document.createElement('script')
+    s.src = GSI_SRC
+    s.async = true
+    s.defer = true
+    s.onload = () => resolve()
+    s.onerror = () => {
+      gsiPromise = null
+      reject(new Error('Google 로그인 스크립트를 불러오지 못했습니다.'))
+    }
+    document.head.appendChild(s)
+  })
+  return gsiPromise
+}
+
+function prefersDark() {
+  const t = document.documentElement.dataset.theme
+  if (t) return t === 'dark'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
 export default function AuthButton() {
-  const { user, status, logout } = useAuth()
+  const { user, status, error, loginWithCredential, logout } = useAuth()
+  const buttonRef = useRef<HTMLDivElement>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  // 로그아웃 상태일 때 Google 공식 버튼을 그립니다.
+  useEffect(() => {
+    if (status !== 'signed-out') return
+    let cancelled = false
+    loadGsi()
+      .then(() => {
+        if (cancelled || !buttonRef.current || !window.google) return
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: ({ credential }) => loginWithCredential(credential),
+          cancel_on_tap_outside: true,
+        })
+        window.google.accounts.id.renderButton(buttonRef.current, {
+          type: 'standard',
+          theme: prefersDark() ? 'filled_black' : 'outline',
+          size: 'medium',
+          text: 'signin_with',
+          shape: 'pill',
+          logo_alignment: 'left',
+          locale: 'ko',
+        })
+      })
+      .catch((e: Error) => !cancelled && setLoadError(e.message))
+    return () => {
+      cancelled = true
+    }
+  }, [status, loginWithCredential])
 
   // 로그인 여부 확인 중에는 자리만 잡아 둡니다 (레이아웃 흔들림 방지)
-  if (status === 'loading') return <div className="h-9 w-28" aria-hidden="true" />
+  if (status === 'loading') return <div className="h-9 w-36" aria-hidden="true" />
 
   if (!user) {
+    const message = error ?? loadError
     return (
-      <a
-        href={LOGIN_URL}
-        className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-line bg-surface px-3.5 py-2 text-sm font-medium text-ink no-underline hover:border-muted"
-      >
-        <GoogleMark />
-        Google로 로그인
-      </a>
+      <div className="relative flex items-center">
+        <div ref={buttonRef} className="min-h-8" />
+        {message && (
+          <p role="alert" className="absolute top-full right-0 mt-2 w-max max-w-[16rem] rounded-lg border border-line bg-surface px-3 py-2 text-xs text-clay shadow-sm">
+            {message}
+          </p>
+        )}
+      </div>
     )
   }
 
