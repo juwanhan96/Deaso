@@ -11,6 +11,7 @@
     "deploy": "npm run build && wrangler pages deploy"
   },
   "dependencies": {
+    "@hono/oauth-providers": "^0.9.1",
     "hono": "^4.13.19",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"

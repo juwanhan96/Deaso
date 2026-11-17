@@ -1,0 +1,4 @@
+# 이 파일을 .dev.vars 로 복사해 값을 채우세요. (.dev.vars 는 git에 올라가지 않습니다)
+GOOGLE_CLIENT_SECRET=
+# 아무 긴 임의 문자열. 예: node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+SESSION_SECRET=
